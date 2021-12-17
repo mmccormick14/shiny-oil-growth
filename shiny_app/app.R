@@ -1,47 +1,24 @@
-#
-# This is a Shiny web application. You can run the application by clicking
-# the 'Run App' button above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
-
 library(shiny)
+library(ggplot2)
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
-
-    # Application title
-    titlePanel("Old Faithful Geyser Data"),
-
-    # Sidebar with a slider input for number of bins 
-    sidebarLayout(
-        sidebarPanel(
-            sliderInput("bins",
-                        "Number of bins:",
-                        min = 1,
-                        max = 50,
-                        value = 30)
-        ),
-
-        # Show a plot of the generated distribution
-        mainPanel(
-           plotOutput("distPlot")
-        )
-    )
+    titlePanel("Number of oil wells operating in each US state, 1919-2009"),
+    plotOutput("plot", click = "click"),
+    selectInput("state", label = "state", choices = wells_per_state$state),
+    tableOutput("data")
 )
 
-# Define server logic required to draw a histogram
-server <- function(input, output) {
-
-    output$distPlot <- renderPlot({
-        # generate bins based on input$bins from ui.R
-        x    <- faithful[, 2]
-        bins <- seq(min(x), max(x), length.out = input$bins + 1)
-
-        # draw the histogram with the specified number of bins
-        hist(x, breaks = bins, col = 'darkgray', border = 'white')
+# Define server logic required to draw line graphs
+server <- function(input, output, session) {
+    output$plot <- renderPlot({
+        ggplot(wells_per_state %>% filter(state == input$state),
+            aes(x = prod_year, y = total_wells_operating)) + geom_point()
+    }, res = 96)
+    
+    output$data <- renderTable({
+        nearPoints(wells_per_state %>% filter(state == input$state), 
+                   input$click, xvar = "prod_year", yvar = "total_wells_operating")
     })
 }
 
